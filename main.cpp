@@ -7,25 +7,11 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
-// #include <cstdlib>
-// #include <string>
 
-
-// Define the maximum command line size
 #define MAX_CMD_LINE 80
-
-// void launchDetached() {
-//     std::string batchFilePath = "D:\\biterm.bat";  // Update with the correct Windows path
-
-//     // Command to open a new Windows Command Prompt window using PowerShell and execute the batch file
-//     std::string command = "start cmd.exe /c \"" + batchFilePath + "\"";    
-//     // Execute the command to open a new terminal window
-//     std::system(command.c_str());
-// }
+#define ROOT_DIRECTORY "Bi_term-The-Shell"
 
 void printWelcomeMessage() {
     std::string message = R"(
@@ -97,8 +83,41 @@ void executePipedCommands(char **args1, char **args2) {
     wait(NULL); // Parent process waits for the second child to complete
 }
 
+void changeDirectory(const std::string& path) {
+    if (chdir(path.c_str()) != 0) {
+        std::cerr << "Error: " << strerror(errno) << std::endl;
+    }
+}
+
+std::string getCurrentDirectory() {
+    char cwd[1024];
+    std::string result = "";
+
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        std::string currentPath(cwd);
+        std::string rootDir = ROOT_DIRECTORY;
+
+        // Find the position of ROOT_DIRECTORY in the path
+        std::size_t pos = currentPath.find(rootDir);
+        if (pos != std::string::npos) {
+            // Add length of ROOT_DIRECTORY to the position to skip it
+            std::size_t start = pos + rootDir.length();
+            if (start < currentPath.length()) {
+                // Get the remaining path after ROOT_DIRECTORY
+                result = currentPath.substr(start);
+            }
+        } else {
+            result = currentPath;
+        }
+    } else {
+        std::cerr << "Error getting current directory: " << strerror(errno) << std::endl;
+    }
+
+    return result;
+}
+
+
 int main() {
-    // launchDetached();
     printWelcomeMessage();
     char *args[MAX_CMD_LINE/2 + 1];
     int should_run = 1; // Control the main loop
@@ -107,8 +126,15 @@ int main() {
     std::vector<std::string> entered_input;
     std::vector<std::string> command_history;
 
+    std::string currentDirName = ""; // Initialize with an empty string
+
     while (should_run) {
-        std::cout << "Biterm>"; // Custom shell prompt
+        if (!currentDirName.empty() && currentDirName != "Bi_term-The-Shell") {
+            std::cout << "Biterm>" << currentDirName << "> "; // Display current directory name in prompt
+        } else {
+            std::cout << "Biterm> "; // Display basic prompt if no directory name is set
+        }
+
         std::string input;
         std::getline(std::cin, input); // Get user input
 
@@ -135,6 +161,17 @@ int main() {
         while (iss >> token) {
             entered_input.push_back(token);
             argc++;
+        }
+
+        // Handle `cd` command
+        if (entered_input[0] == "cd") {
+            if (argc < 2) {
+                std::cerr << "Error: Missing directory argument" << std::endl;
+            } else {
+                changeDirectory(entered_input[1]);
+                currentDirName = getCurrentDirectory(); // Update the current directory name
+            }
+            continue;
         }
 
         bool isPipe = false;
