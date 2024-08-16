@@ -4,6 +4,9 @@
 
 Biterm is a simple yet functional command-line shell developed in C++. It provides a basic interactive command-line environment for executing common shell commands and managing file operations. Designed for educational purposes and to simulate basic shell functionalities, Biterm offers a customizable and extendable platform for learning about shell command execution and process management in C++.
 
+
+
+
 ## Features
 
 Biterm includes the following functionalities:
@@ -25,6 +28,11 @@ Biterm includes the following functionalities:
 
 5. **Welcome Message**:
    - Displays a visually appealing ASCII art welcome message when the shell starts.
+
+
+## Demo walkthrough
+
+https://github.com/user-attachments/assets/e877d603-af44-4d42-8237-fc71dde40b90
 
 
 
